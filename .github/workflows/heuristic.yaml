@@ -1,0 +1,62 @@
+name: Run Test Suite
+# on: push
+on: [repository_dispatch, workflow_dispatch]
+jobs:
+  linux:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+        python-version:
+          - '3.11'
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install Dependencies
+        run: |
+          apt install -y adduser base-files bash bash-completion binutils-common:amd64 command-not-found coreutils cron-daemon-common dbus-bin debconf debianutils dhcpcd-base e2fsprogs fuse3 grep hdparm keyutils libattr1:amd64 libaudit-common libbsd0:amd64 libc-bin libc6:amd64 libcap2:amd64 libdbus-1-3:amd64 libfribidi0:amd64 libgcrypt20:amd64 libgnutls30t64:amd64 libgpg-error0:amd64 liblz4-1:amd64 libmagic1t64:amd64 libmd0:amd64 libmecab2:amd64 libpam-runtime libpcre2-8-0:amd64 libpython3.11-minimal:amd64 libpython3.11-stdlib:amd64 libsensors-config libsystemd0:amd64 libtirpc-common libxau6:amd64 libxcb1:amd64 libxdmcp6:amd64 libzstd1:amd64 locales login logrotate lsb-release ltrace man-db media-types multipath-tools nano netbase nftables openssl overlayroot procps python3.11-minimal rsyslog screen sudo tar tzdata ucf usb-modeswitch util-linux walinuxagent wget xdg-utils
+          pip install uv==0.9.26
+      - run: |
+          python --version
+      - run: |
+          which python
+      - run: |
+          python -m site --user-site
+      - run: |
+          python -m pip install --upgrade wheel setuptools
+      - run: |
+          python -m pip install ".[test, optional, doc]"
+      - run: |
+          python -m pytest --doctest-glob "moviepy/**/**.py" --cov moviepy --cov-report term-missing
+          pip install -e .
+          pip install -e .[optional]
+          pip install -e .[test]
+          pip install -e .[doc]
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
+    env:
+      ACCEPT_EULA: Y
+      BOOTSTRAP_HASKELL_NONINTERACTIVE: '1'
+      COV_CORE_CONFIG: ':'
+      COV_CORE_SOURCE: moviepy
+      DEBIAN_FRONTEND: noninteractive
+      DOTNET_MULTILEVEL_LOOKUP: '0'
+      DOTNET_NOLOGO: '1'
+      DOTNET_SKIP_FIRST_TIME_EXPERIENCE: '1'
+      HOMEBREW_CLEANUP_PERIODIC_FULL_DAYS: '3650'
+      HOMEBREW_NO_AUTO_UPDATE: '1'
+      HOSTNAME: pop-os
+      ImageOS: ubuntu24
+      ImageVersion: 20260111.209.1
+      LC_CTYPE: C.UTF-8
+      POWERSHELL_DISTRIBUTION_CHANNEL: GitHub-Actions-ubuntu24
+      PYTHONNOUSERSITE: '1'
+      SHLVL: '1'
+      TERM: xterm
+      _PYI_LINUX_PROCESS_NAME: sawra
+      _PYI_PARENT_PROCESS_LEVEL: '1'
